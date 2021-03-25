@@ -1,17 +1,8 @@
-## My Project
+# Amazon Kendra Samples
+This repository contains examples for Amazon Kendra
 
-TODO: Fill this README out!
+# Automatic Scaling with Amazon Kendra
+The automatic_scaling/ folder contains the AWS Serverless Application Model (AWS SAM) template required to to launch an Amazon Kendra automatic scaling solution.
 
-Be sure to:
-
-* Change the title in this README
-* Edit your repository description on GitHub
-
-## Security
-
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
-
-## License
-
-This library is licensed under the MIT-0 License. See the LICENSE file.
-
+# License Summary
+This sample code is made available under a modified MIT license. See the LICENSE file.
