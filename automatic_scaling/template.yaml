@@ -1,0 +1,96 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS SAM template for a simple lambda function
+Outputs:
+  StackArn:
+    Description: Use this as the stack_arn in your cloud_formation_deployment_stack
+      override.
+    Value: {Ref: 'AWS::StackId'}
+
+Parameters:
+  indexid: {Type: String, Default: '', Description: 'Kendra index id'}
+  defaultunits: {Type: Number, Default: 1 , Description: 'Define your baseline units for Query Capacity'}
+  additionalunits: {Type: Number, Default: 4 , Description: 'Define your the number of Query Capacity Units needed for increased capacity'}
+  
+
+Resources:
+  KendraIndexScalingLambdaFunction:
+    Properties:
+      CodeUri: ./src
+      Events:
+        InvocationLevel:
+          Type: Schedule
+          Properties:
+            Schedule: cron(7 20 * * ? *)
+      Handler: app.lambda_handler
+      MemorySize: 512
+      Role:
+        Fn::GetAtt: [KendraIndexScalingLambdaRole, Arn]
+      Runtime: python3.6
+      Environment:
+        Variables:
+          INDEX_ID: {Ref: 'indexid'}
+          ACCOUNT_ID: {Ref: 'AWS::AccountId'}
+          DEFAULT_UNITS: {Ref: 'defaultunits'}
+          ADDITIONAL_UNITS: {Ref: 'additionalunits'}
+      Timeout: 900
+    Type: AWS::Serverless::Function
+  KendraRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action: ['sts:AssumeRole']
+            Effect: Allow
+            Principal:
+              Service: [kendra.amazonaws.com]
+      ManagedPolicyArns:
+      - Ref: LambdaKendraAccessPolicy
+  KendraIndexScalingLambdaRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: ['sts:AssumeRole']
+          Effect: Allow
+          Principal:
+            Service: [lambda.amazonaws.com]
+        Version: '2012-10-17'
+      ManagedPolicyArns:
+        - Ref: LambdaKendraAccessPolicy
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action: ['iam:PassRole']
+            Effect: Allow
+            Resource:
+              Fn::GetAtt: [KendraRole, Arn]
+          Version: '2012-10-17'
+        PolicyName: 'KendraIndexScalingLambdaPolicy'
+    Type: AWS::IAM::Role
+
+  LambdaLogGroup:
+    DependsOn: KendraIndexScalingLambdaFunction
+    Properties:
+      LogGroupName: {"Fn::Sub": "/aws/lambda/${KendraIndexScalingLambdaFunction}"} # Default lambda log group naming format
+      # https://w.amazon.com/bin/view/AWS/Kumo/GDPR/Team/Knowledge/
+      RetentionInDays: 3653
+    Type: AWS::Logs::LogGroup
+
+
+  LambdaKendraAccessPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Action: ['cloudwatch:*', 'logs:*']
+          Effect: Allow
+          Resource: '*'
+        - Action: [
+                "kendra:UpdateIndex",
+                "kendra:DescribeIndex"]
+          Effect: Allow
+          Resource: {"Fn::Sub": "arn:aws:kendra:${AWS::Region}:${AWS::AccountId}:index/{indexid}"}
