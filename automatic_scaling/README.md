@@ -1,10 +1,10 @@
 # Amazon Kendra Automatic Scaling
 
-This project contains source code and supporting files for a serverless application that will allow you to scale up and down autmatically your Amazon Kendra Enterprise Edition query capacity units.
+This project contains source code and supporting files for a serverless application that will allow you to automatically scale Amazon Kendra Enterprise Edition query capacity units. You can set the Max and Min Query Capacity units as environment variables.
 
-You can deploy with the SAM CLI. 
+You can deploy this application with the SAM CLI. 
 
-It includes the following files and folders:
+This repo includes the following files and folders:
 
 * template.yaml - A template that defines the application's AWS resources.
 * src/app.py - The source code for the Lambda function that will be deployed.
